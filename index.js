@@ -73,34 +73,32 @@ La subida de los museos/organismos es aleatoria, depende de cual llegue mas rapi
 (probar varias veces porque acá se agregan todos de una y tiene mas ventaja los museos)
 */
 
-function dispararMuseos(){
+function guardarMuseos(){
   console.log("Descargando museos")
-  superagent
+  return superagent
     .get('https://www.cultura.gob.ar/api/v2.0/museos')
     .query({ format: 'json' })
-    .end(guardarMuseos)
-  console.log('escribiendo museo en archivo')
+    .end(res => {
+
+      const museos = res.body.results;
+      
+      if(museos == null){
+        return Promise.reject(new Error('No hay museos'));
+      }
+      var stringMuseo = ""
+
+      museos.forEach(museo => {
+        stringMuseo += `${museo.nombre}. Por cualquier consulta comunicarse al ${museo.telefono}. \n`
+      });
+      
+      console.log('escribiendo museo en archivo')
+      fs.appendFile('./museosYOrganismos.txt',stringMuseo,end);
+
+      resolve('Todo bien')
+      
+    })
 }
 
-function guardarMuseos(error, respuesta){
-  
-  return new Promise(function (resolve, reject){
-
-    const museos = respuesta.body.results;
-    var stringMuseo = ""
-    
-    museos.forEach(museo => {
-      stringMuseo += `${museo.nombre}. Por cualquier consulta comunicarse al ${museo.telefono}. \n`
-    });
-    fs.appendFile('./museosYOrganismos.txt', stringMuseo ,function(err){
-      if(err){ return reject('Hubo un error') }
-      console.log('Finaliza de guardar Museos')
-      resolve('Termino')
-    });
-
-    
-  })
-}
 /*
 function guardarOrganismos(error, respuesta){
   
@@ -120,8 +118,8 @@ function guardarOrganismos(error, respuesta){
 }*/
 
 Promise.all([
-  dispararMuseos(),
-  dispararMuseos()
+  guardarMuseos(),
+  guardarMuseos()
 ])
 .then( message => console.log(message))
 .catch( err => console.log(err))
